@@ -1,0 +1,164 @@
+# =============================
+# 📊 STUDENT PERFORMANCE PREDICTION PROJECT
+# =============================
+
+# --------- 1. train_model.py ---------
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+import pickle
+
+# Load dataset (create students.csv manually)
+data = pd.read_csv('data/students.csv')
+
+# Features & target
+X = data[['attendance', 'study_hours', 'internal_marks']]
+y = data['final_marks']
+
+# Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Train model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Save model
+pickle.dump(model, open('model/model.pkl', 'wb'))
+
+print("Model trained and saved successfully!")
+
+
+# --------- 2. app.py ---------
+from flask import Flask, request, render_template
+import pickle
+
+app = Flask(__name__)
+model = pickle.load(open('model/model.pkl', 'rb'))
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        attendance = float(request.form['attendance'])
+        study_hours = float(request.form['study_hours'])
+        internal_marks = float(request.form['internal_marks'])
+
+        prediction = model.predict([[attendance, study_hours, internal_marks]])
+        result = round(prediction[0], 2)
+
+        return render_template('result.html', prediction=result)
+    except:
+        return "Error in input values"
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+# --------- 3. templates/index.html ---------
+"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Performance Predictor</title>
+</head>
+<body>
+    <h2>Enter Student Details</h2>
+    <form action="/predict" method="post">
+        Attendance: <input type="text" name="attendance"><br><br>
+        Study Hours: <input type="text" name="study_hours"><br><br>
+        Internal Marks: <input type="text" name="internal_marks"><br><br>
+        <input type="submit" value="Predict">
+    </form>
+</body>
+</html>
+"""
+
+
+# --------- 4. templates/result.html ---------
+"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Result</title>
+</head>
+<body>
+    <h2>Predicted Final Marks:</h2>
+    <h1>{{ prediction }}</h1>
+    <a href="/">Go Back</a>
+</body>
+</html>
+"""
+
+
+# --------- 5. data/students.csv ---------
+"""
+attendance,study_hours,internal_marks,final_marks
+80,5,70,75
+60,3,55,60
+90,6,85,88
+70,4,65,68
+85,5,78,80
+"""
+
+
+# --------- 6. requirements.txt ---------
+"""
+pandas
+numpy
+scikit-learn
+flask
+"""
+
+
+# --------- 7. README.md ---------
+"""
+# Student Performance Prediction System
+
+## Description
+This project predicts student final marks using Machine Learning.
+
+## Features
+- Input student data
+- Predict final marks
+- Simple web interface
+
+## How to Run
+1. Install requirements:
+   pip install -r requirements.txt
+
+2. Train model:
+   python train_model.py
+
+3. Run app:
+   python app.py
+
+4. Open browser:
+   http://127.0.0.1:5000/
+
+## Tech Stack
+- Python
+- Flask
+- Machine Learning
+"""
+
+
+# =============================
+# 📦 HOW TO CREATE ZIP FILE
+# =============================
+# 1. Create folder structure:
+# student-performance-project/
+#   ├── data/
+#   ├── model/
+#   ├── templates/
+#   ├── app.py
+#   ├── train_model.py
+#   ├── requirements.txt
+#   ├── README.md
+#
+# 2. Place files accordingly
+# 3. Right click → Send to → Compressed ZIP
+
+print("Project files ready!")
